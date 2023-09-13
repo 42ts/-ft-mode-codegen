@@ -1,0 +1,34 @@
+{
+  "name": "@-ft/mode-codegen",
+  "version": "0.0.1",
+  "description": "mode - codegen version",
+  "bin": {
+    "mode-codegen": "./bin.js"
+  },
+  "scripts": {
+    "publish": "rimraf dist && mkdirp dist && cpy README.md bin.d.ts dist && rollup -c && package-json-minifier && cd dist && npm publish"
+  },
+  "author": "Juyeong Maing <mjy9088@naver.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/42ts/-ft-mode-codegen.git"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@-ft/mode": "^0.0.6"
+  },
+  "peerDependenciesMeta": {
+    "@-ft/mode": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.3",
+    "cpy-cli": "^5.0.0",
+    "mkdirp": "^3.0.1",
+    "package.json-minifier": "^0.0.4",
+    "rimraf": "^5.0.1",
+    "rollup": "^3.28.1",
+    "rollup-plugin-shebang-bin": "^0.0.5"
+  }
+}
