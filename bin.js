@@ -74,7 +74,7 @@ function addslashes(str) {
       ? ''
       : `_=document.querySelector('${addslashes(
           config.apply?.querySelector ?? 'html'
-        )}').classList;if(t=='dark');if(t==d)_.add(y);else _.remove(y)${
+        )}').classList;if(t==d)_.add(y);else _.remove(y)${
           config.apply?.lightClassName
             ? `;if(t==l)_.add(Y);else _.remove(Y)`
             : ''
