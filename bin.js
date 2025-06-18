@@ -16,6 +16,13 @@ function validatePersist(persist) {
     throw new Error(`Invalid persist type: ${persist.type}`);
   if (persist.key !== undefined && typeof persist.key !== 'string')
     throw new Error('Invalid persist key: string expected');
+  if (
+    persist.cookieSystemThemeKey !== undefined &&
+    typeof persist.cookieSystemThemeKey !== 'string'
+  )
+    throw new Error(
+      'Invalid persist cookieSystemThemeKey: string or undefined expected'
+    );
   if (persist.custom !== undefined && typeof persist.custom !== 'boolean')
     throw new Error('Invalid persist custom: boolean expected');
 }
@@ -79,43 +86,52 @@ function addslashes(str) {
             ? `;if(t==l)_.add(Y);else _.remove(Y)`
             : ''
         }`;
-  const save = config.persist?.custom
+  const saveFuncName = '$';
+  const saveFunc = config.persist?.custom
     ? ''
     : !config.persist?.type || config.persist.type === 'cookie'
-    ? `;document.cookie=K+'='+m+'; path=/'`
-    : `;${config.persist.type}.setItem(K,m)`;
+    ? `function ${saveFuncName}(){document.cookie=K+'='+m+'; path=/'${
+        config.persist?.cookieSystemThemeKey
+          ? `;document.cookie='${addslashes(config.persist.cookieSystemThemeKey)}='+(q.matches?d:l)+'; path=/'`
+          : ''
+      }}`
+    : `function ${saveFuncName}(){${config.persist.type}.setItem(K,m)}`;
   writeFile(
     'mode.js',
     // q = mediaQuery, m/t = current mode/theme, M/T = mode/theme watchers
     `;window['${addslashes(
       config.variableName
     )}']=(function(q,M,T,l,d,X,K,C,y,Y,m,t,H){` +
-    // x = sanitizeMode
-    `function x(_){return _==l||_==d?_:X}` +
-    // s = setTheme
-    `function s(_){t=_;T.forEach(function(_){_(t)});${apply}}` +
-    // S = setMode
-    `function S(_){m=x(_);M.forEach(function(_){_(m)});if(H)q.removeEventListener(C,H);H=0;if(m==X){H=h;q.addEventListener(C,H);s(m==X?[l,d][+q.matches]:m)}else s(m)${save}}` +
-    // h = eventListener
-    `function h(e){s([l,d][+e.matches])}` +
-    `S(${load});` +
-    `return{` +
-    `getMode:function(){return m},` +
-    `getTheme:function(){return t},` +
-    `setMode:S,` +
-    `watchMode:function(l,w){w=function(_){l(_)};w(m);M.push(w);return function(i){i=M.indexOf(w);i>=0&&M.splice(i,1)}},` +
-    `watchTheme:function(l,w){w=function(_){l(_)};w(t);T.push(w);return function(i){i=T.indexOf(w);i>=0&&T.splice(i,1)}}` +
-    `}` +
-    `})(window.matchMedia('(prefers-color-scheme: dark)'),[],[],'light','dark','system','${addslashes(
-      config.persist?.key ?? ''
-    )}','change'${
-      config.apply !== 'custom'
-        ? `,'${addslashes(config.apply?.darkClassName ?? 'dark')}'${
-            config.apply?.lightClassName
-              ? `,'${addslashes(config.apply.lightClassName)}'`
-              : ''
-          }`
-        : ''
-    });`
+      // x = sanitizeMode
+      `function x(_){return _==l||_==d?_:X}` +
+      // s = setTheme
+      `function s(_){t=_;T.forEach(function(_){_(t)});${apply}}` +
+      // S = setMode
+      `function S(_){m=x(_);M.forEach(function(_){_(m)});if(H)q.removeEventListener(C,H);H=0;if(m==X){H=h;q.addEventListener(C,H);s(m==X?q.matches?d:l:m)}else s(m)${
+        saveFunc && `;${saveFuncName}()`
+      }}` +
+      // h = eventListener
+      `function h(e){s([l,d][+e.matches])}` +
+      saveFunc +
+      `S(${load});` +
+      (saveFunc && `q.addEventListener(C,${saveFuncName});`) +
+      `return{` +
+      `getMode:function(){return m},` +
+      `getTheme:function(){return t},` +
+      `setMode:S,` +
+      `watchMode:function(l,w){w=function(_){l(_)};w(m);M.push(w);return function(i){i=M.indexOf(w);i>=0&&M.splice(i,1)}},` +
+      `watchTheme:function(l,w){w=function(_){l(_)};w(t);T.push(w);return function(i){i=T.indexOf(w);i>=0&&T.splice(i,1)}}` +
+      `}` +
+      `})(window.matchMedia('(prefers-color-scheme: dark)'),[],[],'light','dark','system','${addslashes(
+        config.persist?.key ?? ''
+      )}','change'${
+        config.apply !== 'custom'
+          ? `,'${addslashes(config.apply?.darkClassName ?? 'dark')}'${
+              config.apply?.lightClassName
+                ? `,'${addslashes(config.apply.lightClassName)}'`
+                : ''
+            }`
+          : ''
+      });`
   );
 })();

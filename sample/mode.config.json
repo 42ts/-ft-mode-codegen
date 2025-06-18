@@ -1,0 +1,9 @@
+{
+  "persist": {
+    "type": "cookie",
+    "key": "theme",
+    "cookieSystemThemeKey": "system-theme"
+  },
+  "defaultMode": "system",
+  "variableName": "npm:@-ft/mode-codegen"
+}

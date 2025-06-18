@@ -6,7 +6,8 @@
     "mode-codegen": "./bin.js"
   },
   "scripts": {
-    "publish": "rimraf dist && mkdirp dist && cpy README.md bin.d.ts dist && rollup -c && package-json-minifier && cd dist && npm publish"
+    "build": "rimraf dist && mkdirp dist && cpy README.md bin.d.ts dist && rollup -c && package-json-minifier",
+    "publish": "npm run build && cd dist && npm publish"
   },
   "author": "Juyeong Maing <mjy9088@naver.com>",
   "repository": {

@@ -4,6 +4,8 @@ export interface ModeCodegenConfigPersist {
   type?: 'cookie' | 'localStorage' | 'sessionStorage';
   /** cookie name, or local/session storage key. default is 'mode'. */
   key?: string;
+  /** cookie name for store system theme. default is undefined. */
+  cookieSystemThemeKey?: string;
   /** don't save in generated code. default is false. */
   custom?: boolean;
 }
