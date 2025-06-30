@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'fs/promises';
 import type { ModeCodegenConfig } from './bin';
+import { Variable } from './variable';
 
 export function validateMode(
   mode: any
@@ -57,13 +58,22 @@ export function validateConfig(config: ModeCodegenConfig): void {
   if (config.apply !== undefined) validateApply(config.apply);
 }
 
-export function addslashes(str: string): string {
+function addslashes(str: string): string {
   return str.replace(/[\\"']/g, '\\$&');
 }
 
 export function generateCode(config: ModeCodegenConfig): string {
   validateConfig(config);
-  const fallbackToDefault =
+  const LIGHT = Variable.from('"light"');
+  const DARK = Variable.from('"dark"');
+  const SYSTEM = Variable.from('"system"');
+  const DEFAULT_MODE =
+    !config.defaultMode || config.defaultMode === 'system'
+      ? SYSTEM
+      : config.defaultMode === 'dark'
+      ? DARK
+      : LIGHT;
+  const fallbackToDefault = // `|| '(default mode)'`
     !config.defaultMode || config.defaultMode === 'system'
       ? ''
       : `||'${config.defaultMode}'`;
