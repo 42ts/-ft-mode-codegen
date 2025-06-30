@@ -7,7 +7,8 @@
   },
   "scripts": {
     "build": "rimraf dist && mkdirp dist && cpy README.md bin.d.ts dist && rollup -c && package-json-minifier",
-    "publish": "npm run build && cd dist && npm publish"
+    "publish": "npm run build && cd dist && npm publish",
+    "test": "node --import tsx --test test/test.ts"
   },
   "author": "Juyeong Maing <mjy9088@naver.com>",
   "repository": {
@@ -25,11 +26,14 @@
   },
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.3",
+    "@types/node": "^24.0.7",
     "cpy-cli": "^5.0.0",
     "mkdirp": "^3.0.1",
     "package.json-minifier": "^0.0.4",
     "rimraf": "^5.0.1",
     "rollup": "^3.28.1",
-    "rollup-plugin-shebang-bin": "^0.0.5"
+    "rollup-plugin-shebang-bin": "^0.0.5",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
   }
 }
