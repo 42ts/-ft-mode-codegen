@@ -2,20 +2,26 @@
 
 import { generateFromFile } from './core';
 
-export interface ModeCodegenConfigPersist {
-  type?: 'cookie' | 'localStorage' | 'sessionStorage';
+export type ModeCodegenConfigPersist =
+  | ModeCodegenConfigPersistStorage
+  | ModeCodegenConfigPersistCookie;
+
+export interface ModeCodegenConfigPersistStorage {
+  type: 'localStorage' | 'sessionStorage';
   key?: string;
-  cookieSystemThemeKey?: string;
-  custom?: boolean;
 }
 
-export type ModeCodegenConfigApply =
-  | {
-      querySelector?: string;
-      darkClassName?: string;
-      lightClassName?: string | null;
-    }
-  | 'custom';
+export interface ModeCodegenConfigPersistCookie {
+  type?: 'cookie';
+  key?: string;
+  systemThemeKey?: string;
+}
+
+export interface ModeCodegenConfigApply {
+  querySelector?: string;
+  darkClassName?: string;
+  lightClassName?: string | null;
+}
 
 export interface ModeCodegenConfig {
   persist?: ModeCodegenConfigPersist;
