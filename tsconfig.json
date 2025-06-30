@@ -8,6 +8,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["node"],
+    "outDir": "./compile",
     "declaration": true
   },
   "include": ["bin.ts", "core.ts", "mode.d.ts"],
