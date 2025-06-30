@@ -13,6 +13,9 @@ export abstract class Statement {
   public abstract prepareCurrentScope(): void;
   public abstract prepareInnerScope(): void;
   public prepare(): void {
+    if (!this.isActivated()) {
+      return;
+    }
     this.prepareCurrentScope();
     this.prepareInnerScope();
   }
