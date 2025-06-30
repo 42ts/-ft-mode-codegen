@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'fs/promises';
 import type { ModeCodegenConfig } from './bin';
-import { Variable } from './variable';
+import { Scope } from './Scope';
 
 export function validateMode(
   mode: any
@@ -64,9 +64,10 @@ function addslashes(str: string): string {
 
 export function generateCode(config: ModeCodegenConfig): string {
   validateConfig(config);
-  const LIGHT = Variable.from('"light"');
-  const DARK = Variable.from('"dark"');
-  const SYSTEM = Variable.from('"system"');
+  const root = new Scope();
+  const LIGHT = root.identifier();
+  const DARK = root.identifier();
+  const SYSTEM = root.identifier();
   const DEFAULT_MODE =
     !config.defaultMode || config.defaultMode === 'system'
       ? SYSTEM

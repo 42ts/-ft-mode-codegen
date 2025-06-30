@@ -8,7 +8,7 @@
   "scripts": {
     "build": "rimraf dist && tsc && cpy README.md dist && package-json-minifier",
     "publish": "npm run build && cd dist && npm publish",
-    "test": "tsc && node --import tsx --test test/test.ts"
+    "test": "tsc && node --import tsx --test test/**/*.test.ts"
   },
   "author": "Juyeong Maing <mjy9088@naver.com>",
   "repository": {
