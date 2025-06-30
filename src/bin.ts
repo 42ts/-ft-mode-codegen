@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { generateFromFile } from './core';
 
 export interface ModeCodegenConfigPersist {

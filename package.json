@@ -6,7 +6,7 @@
     "mode-codegen": "./bin.js"
   },
   "scripts": {
-    "build": "rimraf dist && mkdirp dist && tsc && cpy README.md bin.d.ts dist && rollup -c && package-json-minifier",
+    "build": "rimraf dist && tsc && cpy README.md dist && package-json-minifier",
     "publish": "npm run build && cd dist && npm publish",
     "test": "tsc && node --import tsx --test test/test.ts"
   },
@@ -25,14 +25,11 @@
     }
   },
   "devDependencies": {
-    "@rollup/plugin-terser": "^0.4.3",
     "@types/node": "^24.0.7",
     "cpy-cli": "^5.0.0",
     "mkdirp": "^3.0.1",
     "package.json-minifier": "^0.0.4",
     "rimraf": "^5.0.1",
-    "rollup": "^3.28.1",
-    "rollup-plugin-shebang-bin": "^0.0.5",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   }

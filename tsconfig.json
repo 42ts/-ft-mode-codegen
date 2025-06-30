@@ -8,9 +8,9 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["node"],
-    "outDir": "./compile",
+    "outDir": "./dist",
     "declaration": true
   },
-  "include": ["bin.ts", "core.ts", "mode.d.ts"],
-  "exclude": ["test"]
+  "include": ["src"],
+  "exclude": ["dist"]
 }
