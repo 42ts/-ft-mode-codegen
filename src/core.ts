@@ -1,5 +1,11 @@
 import { readFile, writeFile } from 'fs/promises';
 import type { ModeCodegenConfig } from './bin';
+import {
+  FunctionNode,
+  IdentifierManager,
+  RawNode,
+  VariableManager,
+} from './ast';
 
 export function validateMode(
   mode: any
@@ -63,71 +69,81 @@ export function addslashes(str: string): string {
 
 export function generateCode(config: ModeCodegenConfig): string {
   validateConfig(config);
+  const idm = new IdentifierManager();
+  const vm = new VariableManager(idm);
+
+  const q = vm.create("window.matchMedia('(prefers-color-scheme: dark)')");
+  const M = vm.create('[]');
+  const T = vm.create('[]');
+  const l = vm.create("'light'");
+  const d = vm.create("'dark'");
+  const X = vm.create("'system'");
+  const C = vm.create("'change'");
+
+  let K: string | null = null;
+  if (!config.persist?.custom) {
+    K = vm.create(`'${addslashes(config.persist?.key ?? 'dark')}'`);
+  }
+
+  let y: string | null = null;
+  let Y: string | null = null;
+  if (config.apply !== 'custom') {
+    y = vm.create(`'${addslashes(config.apply?.darkClassName ?? 'dark')}'`);
+    if (config.apply?.lightClassName) {
+      Y = vm.create(`'${addslashes(config.apply.lightClassName)}'`);
+    }
+  }
+
+  const body: RawNode[] = [];
+  body.push(new RawNode('var m,t,H;'));
+  body.push(new RawNode(`function x(_){return _==${l}||_==${d}?_:${X}}`));
+
+  if (config.apply === 'custom') {
+    body.push(new RawNode(`function s(_){t=_;T.forEach(function(_){_(t)})}`));
+  } else {
+    const selector = addslashes(config.apply?.querySelector ?? 'html');
+    let applyCode = `_=document.querySelector('${selector}').classList;if(t==${d})_.add(${y});else _.remove(${y})`;
+    if (Y) applyCode += `;if(t==${l})_.add(${Y});else _.remove(${Y})`;
+    body.push(new RawNode(`function s(_){t=_;T.forEach(function(_){_(t)});${applyCode}}`));
+  }
+
+  let saveFuncName: string | null = null;
+  if (!config.persist?.custom) {
+    saveFuncName = idm.next();
+    if (!config.persist?.type || config.persist.type === 'cookie') {
+      const cookieSystemThemeKey = config.persist?.cookieSystemThemeKey
+        ? `;document.cookie='${addslashes(config.persist.cookieSystemThemeKey)}='+(q.matches?${d}:${l})+'; path=/'`
+        : '';
+      body.push(new RawNode(`function ${saveFuncName}(){document.cookie=${K}+'='+m+'; path=/'${cookieSystemThemeKey}}`));
+    } else {
+      body.push(new RawNode(`function ${saveFuncName}(){${config.persist.type}.setItem(${K},m)}`));
+    }
+  }
+
   const fallbackToDefault =
     !config.defaultMode || config.defaultMode === 'system'
       ? ''
       : `||'${config.defaultMode}'`;
+
   const load = config.persist?.custom
     ? `'${config.defaultMode}'`
     : !config.persist?.type || config.persist.type === 'cookie'
-    ? `(function(c,i){for(;i<c.length;i++)if(!c[i].indexOf(K+'='))return c[i].substring(${
-        (config.persist?.key ?? 'dark').length + 1
-      })})(document.cookie.split('; '),0)${fallbackToDefault}`
-    : `${config.persist.type}.getItem(K)${fallbackToDefault}`;
-  const apply =
-    config.apply === 'custom'
-      ? ''
-      : `_=document.querySelector('${addslashes(
-          config.apply?.querySelector ?? 'html'
-        )}').classList;if(t==d)_.add(y);else _.remove(y)${
-          config.apply?.lightClassName
-            ? `;if(t==l)_.add(Y);else _.remove(Y)`
-            : ''
-        }`;
-  const saveFuncName = '$';
-  const saveFunc = config.persist?.custom
-    ? ''
-    : !config.persist?.type || config.persist.type === 'cookie'
-    ? `function ${saveFuncName}(){document.cookie=K+'='+m+'; path=/'${
-        config.persist?.cookieSystemThemeKey
-          ? `;document.cookie='${addslashes(
-              config.persist.cookieSystemThemeKey
-            )}='+(q.matches?d:l)+'; path=/'`
-          : ''
-      }}`
-    : `function ${saveFuncName}(){${config.persist.type}.setItem(K,m)}`;
-  return (
-    `;window['${addslashes(
-      config.variableName
-    )}']=(function(q,M,T,l,d,X,K,C,y,Y,m,t,H){` +
-    `function x(_){return _==l||_==d?_:X}` +
-    `function s(_){t=_;T.forEach(function(_){_(t)});${apply}}` +
-    `function S(_){m=x(_);M.forEach(function(_){_(m)});if(H)q.removeEventListener(C,H);H=0;if(m==X){H=h;q.addEventListener(C,H);s(m==X?q.matches?d:l:m)}else s(m)${
-      saveFunc && `;${saveFuncName}()`
-    }}` +
-    `function h(e){s([l,d][+e.matches])}` +
-    saveFunc +
-    `S(${load});` +
-    (saveFunc && `q.addEventListener(C,${saveFuncName});`) +
-    `return{` +
-    `getMode:function(){return m},` +
-    `getTheme:function(){return t},` +
-    `setMode:S,` +
-    `watchMode:function(l,w){w=function(_){l(_)};w(m);M.push(w);return function(i){i=M.indexOf(w);i>=0&&M.splice(i,1)}},` +
-    `watchTheme:function(l,w){w=function(_){l(_)};w(t);T.push(w);return function(i){i=T.indexOf(w);i>=0&&T.splice(i,1)}}` +
-    `}` +
-    `})(window.matchMedia('(prefers-color-scheme: dark)'),[],[],'light','dark','system','${addslashes(
-      config.persist?.key ?? ''
-    )}','change'${
-      config.apply !== 'custom'
-        ? `,'${addslashes(config.apply?.darkClassName ?? 'dark')}'${
-            config.apply?.lightClassName
-              ? `,'${addslashes(config.apply.lightClassName)}'`
-              : ''
-          }`
-        : ''
-    });`
+    ? `(function(c,i){for(;i<c.length;i++)if(!c[i].indexOf(${K}+'='))return c[i].substring(${(config.persist?.key ?? 'dark').length + 1})})(document.cookie.split('; '),0)${fallbackToDefault}`
+    : `${config.persist.type}.getItem(${K})${fallbackToDefault}`;
+
+  body.push(
+    new RawNode(
+      `function S(_){m=x(_);M.forEach(function(_){_(m)});if(H)q.removeEventListener(${C},H);H=0;if(m==${X}){H=h;q.addEventListener(${C},H);s(m==${X}?q.matches?${d}:${l}:m)}else s(m)${saveFuncName ? `;${saveFuncName}()` : ''}}`
+    )
   );
+  body.push(new RawNode(`function h(e){s([${l},${d}][+e.matches])}`));
+
+  body.push(new RawNode(`S(${load});`));
+  if (saveFuncName) body.push(new RawNode(`q.addEventListener(${C},${saveFuncName});`));
+  body.push(new RawNode(`return{getMode:function(){return m},getTheme:function(){return t},setMode:S,watchMode:function(l,w){w=function(_){l(_)};w(m);M.push(w);return function(i){i=M.indexOf(w);i>=0&&M.splice(i,1)}},watchTheme:function(l,w){w=function(_){l(_)};w(t);T.push(w);return function(i){i=T.indexOf(w);i>=0&&T.splice(i,1)}}}`));
+
+  const func = new FunctionNode(vm.params, body);
+  return `;window['${addslashes(config.variableName)}']=${func.print()}(${vm.args.join(',')});`;
 }
 
 export async function generate(

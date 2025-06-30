@@ -13,7 +13,11 @@ test('generated file sets variable', async () => {
   try {
     const config = { variableName: 'myDarkMode' };
     await writeFile(path.join(tmp, 'mode.config.json'), JSON.stringify(config));
-    const result = spawnSync(process.execPath, [path.resolve(__dirname, '../bin.js')], { cwd: tmp });
+    const result = spawnSync(
+      process.execPath,
+      [path.resolve(__dirname, '../dist/bin.js')],
+      { cwd: tmp }
+    );
     assert.strictEqual(result.status, 0, result.stderr?.toString() || 'process failed');
     const output = await readFile(path.join(tmp, 'mode.js'), 'utf8');
     assert.match(output, /window\['myDarkMode'\]/, 'variable not initialized correctly');
