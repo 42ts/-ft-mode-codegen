@@ -63,42 +63,58 @@ export function addslashes(str: string): string {
 
 export function generateCode(config: ModeCodegenConfig): string {
   validateConfig(config);
+  const cfg = {
+    defaultMode: config.defaultMode ?? 'system',
+    persist:
+      !config.persist ||
+      !config.persist.type ||
+      config.persist.type === 'cookie'
+        ? {
+            type: 'cookie' as const,
+            key: config.persist?.key ?? 'dark',
+            systemThemeKey: config.persist?.systemThemeKey ?? 'theme',
+          }
+        : {
+            type: config.persist.type,
+            key: config.persist.key ?? 'dark',
+          },
+    apply: {
+      querySelector: config.apply?.querySelector ?? 'html',
+      darkClassName: config.apply?.darkClassName ?? 'dark',
+      lightClassName: config.apply?.lightClassName ?? null,
+    },
+    variableName: config.variableName ?? '@-ft/mode',
+  };
+
   const fallbackToDefault =
     !config.defaultMode || config.defaultMode === 'system'
       ? ''
       : `||'${config.defaultMode}'`;
-  const load = config.persist?.custom
-    ? `'${config.defaultMode}'`
-    : !config.persist?.type || config.persist.type === 'cookie'
-    ? `(function(c,i){for(;i<c.length;i++)if(!c[i].indexOf(K+'='))return c[i].substring(${
-        (config.persist?.key ?? 'dark').length + 1
-      })})(document.cookie.split('; '),0)${fallbackToDefault}`
-    : `${config.persist.type}.getItem(K)${fallbackToDefault}`;
-  const apply =
-    config.apply === 'custom'
-      ? ''
-      : `_=document.querySelector('${addslashes(
-          config.apply?.querySelector ?? 'html'
-        )}').classList;if(t==d)_.add(y);else _.remove(y)${
-          config.apply?.lightClassName
-            ? `;if(t==l)_.add(Y);else _.remove(Y)`
-            : ''
-        }`;
+  const load =
+    cfg.persist.type === 'cookie'
+      ? `(function(c,i){for(;i<c.length;i++)if(!c[i].indexOf(K+'='))return c[i].substring(${
+          cfg.persist.key.length + 1
+        })})(document.cookie.split('; '),0)${fallbackToDefault}`
+      : `${cfg.persist.type}.getItem(K)${fallbackToDefault}`;
+  const apply = `_=document.querySelector('${addslashes(
+    cfg.apply.querySelector
+  )}').classList;if(t==d)_.add(y);else _.remove(y)${
+    cfg.apply.lightClassName ? `;if(t==l)_.add(Y);else _.remove(Y)` : ''
+  }`;
   const saveFuncName = '$';
-  const saveFunc = config.persist?.custom
-    ? ''
-    : !config.persist?.type || config.persist.type === 'cookie'
-    ? `function ${saveFuncName}(){document.cookie=K+'='+m+'; path=/'${
-        config.persist?.cookieSystemThemeKey
-          ? `;document.cookie='${addslashes(
-              config.persist.cookieSystemThemeKey
-            )}='+(q.matches?d:l)+'; path=/'`
-          : ''
-      }}`
-    : `function ${saveFuncName}(){${config.persist.type}.setItem(K,m)}`;
+  const saveFunc =
+    cfg.persist.type === 'cookie'
+      ? `function ${saveFuncName}(){document.cookie=K+'='+m+'; path=/'${
+          cfg.persist.systemThemeKey
+            ? `;document.cookie='${addslashes(
+                cfg.persist.systemThemeKey
+              )}='+(q.matches?d:l)+'; path=/'`
+            : ''
+        }}`
+      : `function ${saveFuncName}(){${cfg.persist.type}.setItem(K,m)}`;
   return (
     `;window['${addslashes(
-      config.variableName
+      cfg.variableName
     )}']=(function(q,M,T,l,d,X,K,C,y,Y,m,t,H){` +
     `function x(_){return _==l||_==d?_:X}` +
     `function s(_){t=_;T.forEach(function(_){_(t)});${apply}}` +
@@ -117,16 +133,12 @@ export function generateCode(config: ModeCodegenConfig): string {
     `watchTheme:function(l,w){w=function(_){l(_)};w(t);T.push(w);return function(i){i=T.indexOf(w);i>=0&&T.splice(i,1)}}` +
     `}` +
     `})(window.matchMedia('(prefers-color-scheme: dark)'),[],[],'light','dark','system','${addslashes(
-      config.persist?.key ?? ''
-    )}','change'${
-      config.apply !== 'custom'
-        ? `,'${addslashes(config.apply?.darkClassName ?? 'dark')}'${
-            config.apply?.lightClassName
-              ? `,'${addslashes(config.apply.lightClassName)}'`
-              : ''
-          }`
+      cfg.persist.key
+    )}','change'${`,'${addslashes(config.apply?.darkClassName ?? 'dark')}'${
+      config.apply?.lightClassName
+        ? `,'${addslashes(config.apply.lightClassName)}'`
         : ''
-    });`
+    }`});`
   );
 }
 
